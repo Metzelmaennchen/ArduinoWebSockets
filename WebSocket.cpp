@@ -2,20 +2,10 @@
 #include <sha1.h>
 #include <Base64.h>
 
-// 36 Ziffern
-const char* key = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-
 
 WebSocket::WebSocket(IPAddress _ip) 
   : ip(_ip)
 {
-    int counter = 0;
-    // append the magic number to our key buffer
-    for(int i = 24; i < 60; i++)
-    {
-        keyInputBuffer[i] = key[counter];
-        counter++;
-    }
 }
 
 
@@ -100,6 +90,8 @@ boolean WebSocket::HandShake()
     int msgBufPtr = 0;
     char msgBuffer[80];
     boolean gotNewLine = false;
+    // 36 Ziffern
+    char keyInputBuffer[] = "xxxxxxxxxxxxxxxxxxxxxxxx258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
     while (client.connected())
     {
@@ -145,13 +137,12 @@ boolean WebSocket::HandShake()
                         // is there a key inside?
                         if(msgBuffer[14] == 'K' && msgBuffer[15] == 'e' && msgBuffer[16] == 'y')
                         {
-                            int counter = 0;
                             // copy our key to the keybuffer
-                            for(int i = 19; i < 43; i++)
+                            for(byte i = 19, j = 0; i < 43; i++, j++)
                             {
-                                keyInputBuffer[counter] = msgBuffer[i];
-                                counter++;
+                                keyInputBuffer[j] = msgBuffer[i];
                             }
+                            gotKey = true;
                         }
                     }
                 }
