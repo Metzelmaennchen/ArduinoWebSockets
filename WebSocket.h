@@ -15,7 +15,7 @@ class WebSocket {
   boolean HandShake();
   
   // Sends a single character to the client
-  void SendMessage(char message);
+  void SendChar(char message);
   // Sends a message to the client
   void SendMessage(char *message, uint16_t length);
 
