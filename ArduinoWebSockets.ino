@@ -1,5 +1,35 @@
+/*
+ * Copyright (c) 2012, Steffen Kristoph Metze. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ * * Neither the name of the WebSocket++ Project nor the
+ * names of its contributors may be used to endorse or promote products
+ * derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PETER THORSON BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 #include <sha1.h>
 #include <Base64.h>
+// needed for reading sd cards
+#include <SD.h>
+// needed for ethernet communication
 #include <SPI.h>
 #include <Ethernet.h>
 
@@ -15,10 +45,23 @@ EthernetServer webSocketServer(8080);
 EthernetServer httpServer(80);
 EthernetClient client;
 bool gotKey = false;
+File myFile;
 
 void setup()
 {  
   Serial.begin(9600);
+  // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
+  // Note that even if it's not used as the CS pin, the hardware SS pin 
+  // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
+  // or the SD library functions will not work. 
+   pinMode(10, OUTPUT);
+   
+  if (!SD.begin(4)) {
+    Serial.println("initialization failed!");
+    return;
+  }
+  Serial.println("SD Card initialization done.");
+
   // start the Ethernet connection and the server:
   Ethernet.begin(mac, ip);
   webSocketServer.begin();
@@ -215,6 +258,26 @@ boolean PerformHandShake()
   // close the connection:
   client.stop();
   return false;
+}
+
+void PrintHtmlPage()
+{
+  // open the file for reading:
+  myFile = SD.open("index.htm");
+  if (myFile) 
+  {
+    // read from the file until there's nothing else in it:
+    while (myFile.available()) 
+    {
+    	client.print((char)myFile.read());
+    }
+    // close the file:
+    myFile.close();
+  }
+  else
+  {
+    client.println("<html>could not open file <html>");
+  }
 }
 
 void loop()
